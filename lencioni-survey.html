@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lencioni Együttműködési Felmérés – Diamond Coaching</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  EMAIL BEÁLLÍTÁS (opcionális – ha üresen hagyod, a riport   ║
+  ║  letöltési módban működik)                                   ║
+  ║                                                              ║
+  ║  1. Regisztrálj: https://www.emailjs.com  (ingyenes)        ║
+  ║  2. Hozz létre Email Service-t (pl. Gmail)                  ║
+  ║  3. Hozz létre Template-t az alábbi változókkal:            ║
+  ║       {{to_email}}  {{from_name}}  {{report_url}}           ║
+  ║  4. Töltsd ki az alábbi három konstanst a <script>-ben      ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,Arial,sans-serif;background:#F4F2EF;min-height:100vh}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+.gradient-bg{background:linear-gradient(135deg,#1E3178,#314A9A);align-items:center;justify-content:center;padding:20px}
+.card{background:white;border-radius:18px;padding:36px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.btn{font-family:inherit;cursor:pointer;border:none;font-weight:700;transition:all .15s}
+.btn:disabled{cursor:not-allowed;opacity:.5}
+.btn-primary{background:linear-gradient(135deg,#1E3178,#314A9A);color:white;border-radius:10px;padding:13px 28px;font-size:15px;width:100%}
+.btn-outline{background:white;border:2px solid #ddd!important;border-radius:8px;padding:10px 20px;font-size:13px;color:#555}
+.btn-ghost{background:none;color:#aaa;font-size:12px;text-decoration:underline;padding:4px}
+.btn-danger{background:#fff0f0;color:#e74c3c;border:1.5px solid #fcc!important;border-radius:8px;padding:8px 16px;font-size:13px}
+.btn-green{background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;width:100%}
+.role-btn{border:2px solid #ddd;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;background:white;color:#333;cursor:pointer;font-family:inherit}
+.role-btn.selected{background:#314A9A;color:white;border-color:#314A9A}
+.scale-btn{width:54px;height:54px;border-radius:12px;font-weight:800;font-size:18px;border:2px solid #e0e0e0;background:white;color:#444;cursor:pointer;font-family:inherit;transition:all .15s}
+.dilemma-btn{padding:15px 18px;border-radius:12px;text-align:left;border:2px solid #e8e8e8;background:white;color:#333;cursor:pointer;font-size:14px;line-height:1.5;font-family:inherit;font-weight:400;display:block;width:100%;transition:all .15s}
+.tab-btn{flex:1;padding:10px;border-radius:8px;border:none;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit;background:transparent;color:#555;transition:all .15s}
+.tab-btn.active{background:#314A9A;color:white}
+.progress-bar{height:5px;background:#dde;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.level-dot{flex:1;height:3px;border-radius:2px;background:#ddd}
+textarea{width:100%;border-radius:10px;border:2px solid #e0e0e0;padding:14px;font-size:14px;resize:vertical;font-family:inherit;outline:none;line-height:1.6}
+textarea:focus{border-color:#314A9A}
+input[type=password],input[type=email],input[type=text]{width:100%;padding:12px;border-radius:8px;border:2px solid #ddd;font-size:15px;font-family:inherit;outline:none}
+input:focus{border-color:#314A9A}
+.role-tile{flex:1;text-align:center;background:#f5f7fa;border-radius:10px;padding:14px 8px}
+.role-tile .count{font-size:28px;font-weight:900;color:#314A9A}
+.role-tile .label{font-size:12px;color:#666}
+.section-card{background:white;border-radius:16px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.07);margin-bottom:14px}
+.section-title{font-weight:800;font-size:15px;color:#314A9A;margin-bottom:14px}
+.pyramid-row{border-radius:8px;padding:7px 14px;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.stat-card{background:white;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.level-card{background:white;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.07)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,25,60,.55);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal-box{background:white;border-radius:20px;padding:32px;max-width:480px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.25);animation:modalIn .2s ease}
+@keyframes modalIn{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-title{font-size:18px;font-weight:800;color:#314A9A;margin-bottom:6px}
+.modal-sub{font-size:13px;color:#94a3b8;margin-bottom:22px;line-height:1.55}
+.info-box{background:#f0f6ff;border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#2c4a7c;line-height:1.65}
+.success-box{background:#f0faf5;border:1.5px solid #6fcf97;border-radius:12px;padding:18px;text-align:center}
+.tag{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="s-landing" class="screen gradient-bg active">
+  <div class="card" style="max-width:520px">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="margin-bottom:14px">
+        <img src="https://diamondcoaching.hu/wp-content/uploads/2020/11/diamond-coaching-logo.svg" alt="Diamond Coaching & Development" style="height:52px;width:auto" onerror="this.style.display='none';document.getElementById('dc-fallback').style.display='block'">
+        <div id="dc-fallback" style="display:none;font-size:15px;font-weight:800;color:#314A9A;letter-spacing:.5px">◆ DIAMOND COACHING & DEVELOPMENT</div>
+      </div>
+      <h1 style="font-size:22px;font-weight:800;color:#314A9A;margin-bottom:4px">Együttműködési Felmérés</h1>
+      <p style="color:#888;font-size:13px">Lencioni – Az öt diszfunkció modellje alapján</p>
+    </div>
+    <div id="pyramid" style="margin-bottom:20px"></div>
+    <p style="font-size:13px;color:#555;line-height:1.7;margin-bottom:18px;text-align:center">
+      A felmérés <strong>anonim</strong>. Add meg a szerepköröd, majd válaszolj
+      őszintén – kb. <strong>10–12 perc</strong>.
+    </p>
+    <p style="font-weight:700;font-size:14px;color:#333;margin-bottom:10px;text-align:center">Válaszd ki a szerepköröd:</p>
+    <div id="role-btns" style="display:flex;gap:8px;justify-content:center;margin-bottom:18px"></div>
+    <button class="btn" id="start-btn" disabled onclick="startSurvey()" style="background:linear-gradient(135deg,#CBA2A3,#b98889);color:white;border-radius:10px;padding:13px 28px;font-size:15px;width:100%;font-weight:700">Felmérés indítása →</button>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn btn-ghost" onclick="showScreen('s-admin-login')">🔐 Admin belépés</button>
+    </div>
+    <div style="text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid #eee">
+      <p style="font-size:11px;color:#aaa;letter-spacing:.3px">Ezt az eszközt a <strong style="color:#314A9A">Diamond Coaching &amp; Development</strong> hozta létre</p>
+    </div>
+  </div>
+</div>
+
+<!-- SURVEY -->
+<div id="s-survey" class="screen" style="flex-direction:column;background:#F4F2EF;padding:20px 16px">
+  <div style="max-width:660px;margin:0 auto 16px;width:100%">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#777;margin-bottom:6px">
+      <span id="q-label"></span><span id="q-pct"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="q-progress"></div></div>
+    <div id="level-dots" style="display:flex;gap:4px;margin-top:8px"></div>
+  </div>
+  <div style="max-width:660px;margin:0 auto;width:100%;background:white;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+    <div id="q-badge" style="display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;margin-bottom:18px"></div>
+    <p id="q-text" style="font-size:17px;font-weight:600;color:#1E1E3A;margin-bottom:24px;line-height:1.55"></p>
+    <div id="q-input"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:28px;align-items:center">
+      <button class="btn btn-outline" id="back-btn" onclick="goBack()" style="display:none">← Vissza</button>
+      <div></div>
+      <button class="btn btn-primary" id="next-btn" style="width:auto" onclick="goNext()" disabled>Következő →</button>
+    </div>
+  </div>
+</div>
+
+<!-- DONE -->
+<div id="s-done" class="screen gradient-bg">
+  <div class="card" style="max-width:460px;text-align:center">
+    <div style="font-size:60px;margin-bottom:12px">✅</div>
+    <h2 style="font-size:22px;font-weight:800;color:#314A9A;margin-bottom:12px">Köszönjük a válaszokat!</h2>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin-bottom:24px">
+      Válaszaid sikeresen rögzítettük. Az eredményeket a workshopon közösen fogjuk feldolgozni a Lencioni-modell keretrendszerében.
+    </p>
+    <div id="done-badges" style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <button class="btn btn-outline" onclick="restart()">Következő kitöltő →</button>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="s-admin-login" class="screen gradient-bg">
+  <div class="card" style="max-width:340px;text-align:center">
+    <div style="font-size:38px;margin-bottom:10px">🔐</div>
+    <h2 style="font-weight:800;color:#314A9A;margin-bottom:18px">Admin belépés</h2>
+    <input type="password" id="pwd-input" placeholder="Jelszó" onkeydown="if(event.key==='Enter')doLogin()">
+    <p id="pwd-err" style="color:#e74c3c;font-size:12px;margin:6px 0 0;display:none">Hibás jelszó</p>
+    <button class="btn btn-primary" onclick="doLogin()" style="margin-top:10px;margin-bottom:10px">Belépés</button>
+    <br><button class="btn btn-ghost" onclick="showScreen('s-landing')">← Vissza</button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="s-admin" class="screen" style="flex-direction:column;background:#F4F2EF;padding:20px 16px">
+  <div style="max-width:980px;margin:0 auto;width:100%">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <img src="https://diamondcoaching.hu/wp-content/uploads/2020/11/diamond-coaching-logo.svg" alt="Diamond Coaching" style="height:36px;width:auto" onerror="this.style.display='none'">
+        <div>
+          <h1 style="font-weight:800;font-size:20px;color:#314A9A">Admin Dashboard</h1>
+          <p style="color:#777;font-size:13px;margin-top:2px">Lencioni Együttműködési Felmérés – elemzés</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div id="resp-count" style="background:#314A9A;color:white;border-radius:10px;padding:8px 16px;font-weight:800;font-size:15px">0 kitöltő</div>
+        <button class="btn" style="background:#314A9A;color:white;border-radius:8px;padding:8px 16px;font-size:13px" onclick="refreshAdmin()">🔄 Frissítés</button>
+        <button class="btn" style="background:#27ae60;color:white;border-radius:8px;padding:8px 16px;font-size:13px" onclick="openEmailModal()">📧 Eredmények küldése</button>
+        <button class="btn btn-danger" onclick="clearData()">🗑️ Adatok törlése</button>
+        <button class="btn btn-outline" onclick="showScreen('s-landing')">Kilépés</button>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;margin-bottom:16px;background:white;border-radius:12px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">📊 Áttekintés</button>
+      <button class="tab-btn" id="tab-roles" onclick="switchTab('roles')">👥 Szerepkörök</button>
+      <button class="tab-btn" id="tab-dilemmas" onclick="switchTab('dilemmas')">⚖️ Dilemmák</button>
+      <button class="tab-btn" id="tab-open" onclick="switchTab('open')">📝 Nyílt válaszok</button>
+    </div>
+    <div id="admin-content"></div>
+  </div>
+</div>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="email-modal" onclick="if(event.target===this)closeEmailModal()">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div class="modal-title">📧 Eredmények elküldése</div>
+      <button onclick="closeEmailModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1">×</button>
+    </div>
+    <p class="modal-sub">Az összesített riport HTML fájlban kerül elküldésre. Add meg annak email címét, akinek küldöd az eredményeket.</p>
+
+    <div id="modal-body">
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:6px">Email cím</label>
+        <input type="email" id="send-email" placeholder="pl. vezeto@ceg.hu" onkeydown="if(event.key==='Enter')doSendResults()">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:6px">Cég / csoport neve (opcionális)</label>
+        <input type="text" id="send-company" placeholder="pl. Acme Kft. – Vezető team">
+      </div>
+
+      <div id="emailjs-status"></div>
+
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-green" onclick="doSendResults()" id="send-btn">📤 Küldés / Letöltés</button>
+      </div>
+      <p style="font-size:11px;color:#b0b8c4;margin-top:10px;text-align:center;line-height:1.5">
+        Ha az EmailJS nincs beállítva, a riport automatikusan letöltődik HTML fájlként,<br>amelyet emailen tudsz elküldeni mellékletként.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  EMAIL KONFIGURÁCIÓ  (opcionális – ld. megjegyzés a fejlécben)
+// ═══════════════════════════════════════════════════════════════
+const EMAILJS_SERVICE_ID  = '';   // pl. 'service_abc123'
+const EMAILJS_TEMPLATE_ID = '';   // pl. 'template_xyz456'
+const EMAILJS_PUBLIC_KEY  = '';   // pl. 'AbC123xYz'
+const EMAIL_CONFIGURED = !!(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
+
+// Riport megtekintő email – HA szeretnéd, hogy minden beküldés után
+// automatikusan kapj értesítést, add meg az email-edet:
+const NOTIFY_EMAIL = '';  // pl. 'vanyigina@diamondcoaching.hu'
+
+// ── BACKEND (Google Apps Script) ─────────────────────────────
+// Illeszd be ide a Google Apps Script Web App URL-jét.
+// Ha üresen hagyod, az app csak helyi (localStorage) módban működik.
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbye-Q8Q8fz0dpBFIKGv0YGNKupnuoUEaAocWB5YCOL1Lp8Wtf5_YQDJEToRB8ATG5GH/exec';
+
+// ── ADMIN JELSZÓ ─────────────────────────────────────────────
+const ADMIN_PWD = "admin123";
+
+// ── ADATOK ───────────────────────────────────────────────────
+const ROLES = [
+  {id:"felso",   label:"Felsővezető"},
+  {id:"kozep",   label:"Középvezető"},
+  {id:"csoport", label:"Csoportvezető"}
+];
+const LEVELS = [
+  {id:"bizalom",     title:"Bizalom",       emoji:"🤝", color:"#c0392b", bg:"#fdf2f2", desc:"Sérülékenység-alapú bizalom"},
+  {id:"konfliktus",  title:"Konfliktus",    emoji:"💬", color:"#d35400", bg:"#fef5ec", desc:"Konstruktív vita vállalása"},
+  {id:"elkotelezes", title:"Elköteleződés", emoji:"🎯", color:"#b7950b", bg:"#fefce7", desc:"Közös döntések mögé beállás"},
+  {id:"felelosseg",  title:"Felelősség",    emoji:"⚖️", color:"#1e8449", bg:"#eafaf1", desc:"Egymástól számonkérés"},
+  {id:"eredmenyek",  title:"Eredmények",    emoji:"🏆", color:"#1a5276", bg:"#eaf2fb", desc:"Kollektív fókusz"}
+];
+const QS = [
+  {id:"b1",lv:"bizalom",    type:"scale",  txt:"Mennyire osztod meg nyíltan a hibáidat és gyengeségeidet más területek vezetőivel?"},
+  {id:"b2",lv:"bizalom",    type:"dilemma",txt:"Egy vezető kolléga nyilvánosan hibázik egy megbeszélésen. Te inkább...",a:"Szólsz neki négyszemközt a megbeszélés után",b:"Szót emelsz a megbeszélésen, hogy segítsd a helyes döntést"},
+  {id:"b3",lv:"bizalom",    type:"scale",  txt:"Mennyire érzed biztonságosnak azt mondani, hogy nem tudom vagy tévedtem a vezető csapatban?"},
+  {id:"b4",lv:"bizalom",    type:"open",   txt:"Írj le egy helyzetet, amikor más területtel való együttműködés különösen nehéznek bizonyult – mi állt a háttérben?"},
+  {id:"b5",lv:"bizalom",    type:"dilemma",txt:"Új, területek közötti projekt indul. Te inkább...",a:"Megvárod, amíg a másik fél jelzi az igényeit",b:"Proaktívan felveszed a kapcsolatot és egyeztetsz"},
+  {id:"k1",lv:"konfliktus", type:"scale",  txt:"Mennyire mondod el nyíltan a véleményedet, ha az eltér a többiekétől egy közös megbeszélésen?"},
+  {id:"k2",lv:"konfliktus", type:"dilemma",txt:"Egy más területű vezető döntésével alapvetően nem értesz egyet. Te inkább...",a:"Elfogadod, mert nem a te hatáskörőd – belül frusztrált maradsz",b:"Megvitatod, vállalva a feszültséget is – mert fontosnak tartod"},
+  {id:"k3",lv:"konfliktus", type:"scale",  txt:"Mennyire jellemző, hogy a valódi vélemények folyosói beszélgetéseken hangzanak el, nem a közös fórumon? (1=soha, 5=rendszeresen)",rev:true},
+  {id:"k4",lv:"konfliktus", type:"open",   txt:"Milyen témákat kerülünk el leginkább a közös megbeszéléseken? Szerinted miért?"},
+  {id:"k5",lv:"konfliktus", type:"dilemma",txt:"Feszült vita alakul ki két terület között – te nem vagy közvetlenül érintett. Te inkább...",a:"Visszahúzódsz – nem szeretsz ilyen helyzetekben lenni",b:"Aktívan segíted a vita konstruktív lezárását"},
+  {id:"e1",lv:"elkotelezes",type:"scale",  txt:"Mennyire érzed, hogy a közös döntések után mindenki egyformán elkötelezett a végrehajtás iránt?"},
+  {id:"e2",lv:"elkotelezes",type:"dilemma",txt:"Egy döntéssel nem értesz egyet, de a csapat meghozta. Te inkább...",a:"Végrehajtod, de a saját csapatodnak is jelzed a fenntartásod",b:"A döntést magadénak tekinted és teljes energiával képviseled"},
+  {id:"e3",lv:"elkotelezes",type:"scale",  txt:"Mennyire jellemző, hogy megbeszélésen látszólagos konszenzus születik, de utána ki-ki a saját útját járja? (1=soha, 5=rendszeresen)",rev:true},
+  {id:"e4",lv:"elkotelezes",type:"open",   txt:"Milyen döntések vagy irányok azok, amelyek mögé nehéz őszintén beállni? Miért?"},
+  {id:"e5",lv:"elkotelezes",type:"dilemma",txt:"Saját területed prioritásai és egy közösen vállalt projekt határideje ütköznek. Te inkább...",a:"A saját területed prioritásait véded – ezért vagy felelős",b:"A közös vállalást tartod elsőnek, és egyeztetsz belül"},
+  {id:"f1",lv:"felelosseg",  type:"scale",  txt:"Mennyire kérsz számon más területektől teljesítményt, ha az közvetlen hatással van a te munkádra?"},
+  {id:"f2",lv:"felelosseg",  type:"dilemma",txt:"Egy másik terület ismételten késve adja át a szükséges anyagokat. Te inkább...",a:"Megoldod magad valahogy – nem akarsz konfrontációt",b:"Jelzed a problémát közvetlenül az érintett vezetőnek, konstruktívan"},
+  {id:"f3",lv:"felelosseg",  type:"scale",  txt:"Mennyire egyértelmű, hogy kinek mi a felelőssége a területek közötti folyamatokban?"},
+  {id:"f4",lv:"felelosseg",  type:"open",   txt:"Milyen folyamatokban hiányzik nálunk az egyértelmű felelősség-meghatározás? Mi az oka?"},
+  {id:"f5",lv:"felelosseg",  type:"dilemma",txt:"A vezető csapat egyik tagja rendszeresen nem tartja a közösen vállalt határidőket. Te inkább...",a:"Nem a te dolgod – majd a felettese szól neki",b:"Szólsz neki közvetlenül – mert ez az egész csapatot érinti"},
+  {id:"r1",lv:"eredmenyek",  type:"scale",  txt:"Mennyire érzed, hogy a vezető csapatban a vállalat közös eredményei fontosabbak, mint az egyes területek mutatói?"},
+  {id:"r2",lv:"eredmenyek",  type:"dilemma",txt:"A saját területed KPI-ja és a vállalat összteljesítménye ütközik. Te inkább...",a:"A saját területed mutatóit véded – ezért vagy felelős",b:"A vállalati érdeket helyezed előtérbe, még ha a saját mutatód szenved is"},
+  {id:"r3",lv:"eredmenyek",  type:"scale",  txt:"Mennyire ismered a többi terület legfontosabb céljait és aktuális kihívásait?"},
+  {id:"r4",lv:"eredmenyek",  type:"open",   txt:"Mit kellene konkrétan változtatni a működésünkben ahhoz, hogy hatékonyabban működjünk együtt más területekkel?"},
+  {id:"r5",lv:"eredmenyek",  type:"dilemma",txt:"Kiderül, hogy egy terület kiváló eredményt ért el, de más területek rovására. A csapat reakciója legyen inkább...",a:"Dicséret – mindenki a saját területéért felelős",b:"Kritikus értékelés – az együttműködési hatást is mérlegelni kell"}
+];
+
+// ── ÁLLAPOT ───────────────────────────────────────────────────
+let state = {role:null,qi:0,saved:{},cur:null,allResp:[],tab:"overview",filterRole:null};
+
+// ── LOCALSTORAGE ──────────────────────────────────────────────
+const LS_KEY = 'lencioni_v2';
+function loadFromStorage(){
+  try{ const d=localStorage.getItem(LS_KEY); if(d) state.allResp=JSON.parse(d); }catch(e){}
+}
+function saveToStorage(){
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(state.allResp)); }catch(e){}
+}
+function clearData(){
+  if(!confirm('Biztosan törlöd az összes választ? Ez nem visszavonható.')) return;
+  localStorage.removeItem(LS_KEY);
+  state.allResp=[];
+  renderAdmin();
+}
+
+// ── SEGÉDFÜGGVÉNYEK ───────────────────────────────────────────
+function getLv(id){ return LEVELS.find(l=>l.id===id); }
+function getRoleLabel(id){ return (ROLES.find(r=>r.id===id)||{}).label||id; }
+function e(id){ return document.getElementById(id); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); e(id).classList.add('active'); }
+function getHC(sc){ return sc<2.5?'#e74c3c':sc<3.5?'#e67e22':'#27ae60'; }
+function getHL(sc){ return sc<2.5?'Kritikus':sc<3.5?'Fejleszthető':'Egészséges'; }
+function getHE(sc){ return sc<2.5?'🔴':sc<3.5?'🟡':'🟢'; }
+
+const INTERP={
+  bizalom:[[0,2.5,"A csapat tagjai kerülik a sebezhetőséget. A hibák és gyengeségek rejtve maradnak, ami alapvetően blokkolja az együttműködést."],[2.5,3.5,"Az alapbizalom jelen van, de a mélyebb nyíltság és a sebezhetőség-vállalás még korlátozott. Fejlesztési potenciál van."],[3.5,6,"A csapat tagjai nyíltan megosztják hibáikat és gyengeségeiket egymással – ez a hatékony együttműködés szilárd alapja."]],
+  konfliktus:[[0,2.5,"A valódi vélemények elfojtottak, a nehéz témák kerültek. A konfrontáció a folyosókon zajlik, nem a fórumon."],[2.5,3.5,"Részleges nyíltság tapasztalható, de bizonyos témák még tabuk. A konstruktív vita kultúrája építés alatt áll."],[3.5,6,"A csapat bátran vállalja a konstruktív vitát. A nézeteltérések nyíltan felszínre kerülnek és produktívan feldolgozódnak."]],
+  elkotelezes:[[0,2.5,"A döntések mögött látszatkonszenzus húzódik. Megbeszélésen mindenki bólint, de utána ki-ki a saját útját járja."],[2.5,3.5,"A döntések többnyire végrehajtódnak, de az őszinte, teljes körű beállás nem mindig valósul meg."],[3.5,6,"A csapat tagjai magukénak tekintik a közös döntéseket és teljes energiával, egységesen képviselik azokat."]],
+  felelosseg:[[0,2.5,"A területek közötti felelősség tisztázatlan, a számonkérés kerülendő téma. Mindenki csak a saját házatáján söpör."],[2.5,3.5,"A belső felelősség részben tiszta, de a területek közötti elvárások és számonkérés még fejlesztésre szorul."],[3.5,6,"Egyértelmű felelősségek jellemzik a csapatot. A tagok bátran és közvetlenül kérnek egymástól számon – konstruktívan."]],
+  eredmenyek:[[0,2.5,"A területi érdekek és mutatók dominálnak. A vállalat közös eredményei háttérbe szorulnak a silók mögött."],[2.5,3.5,"Részben megvan a közös fókusz, de a területi silók hatása még érezhető a mindennapi döntésekben."],[3.5,6,"A csapat a vállalati szintű eredményeket helyezi előtérbe. A közös siker fontosabb az egyéni területi mutatóknál."]]
+};
+function getInterp(lvId,sc){ for(const [mn,mx,txt] of (INTERP[lvId]||[])) if(sc>=mn&&sc<mx) return txt; return ''; }
+
+function computeStats(){
+  const resp=state.allResp, scores={}, dilemmas={}, opens={}, byRole={};
+  LEVELS.forEach(l=>{
+    const sqs=QS.filter(q=>q.lv===l.id&&q.type==='scale');
+    let tot=0,cnt=0;
+    resp.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(v!==undefined){tot+=q.rev?6-v:v;cnt++;} }); });
+    scores[l.id]=cnt>0?Math.round(tot/cnt*100)/100:0;
+  });
+  QS.filter(q=>q.type==='dilemma').forEach(q=>{
+    let a=0,b=0; resp.forEach(r=>{ if(r.ans[q.id]==='a')a++; if(r.ans[q.id]==='b')b++; });
+    dilemmas[q.id]={a,b,total:a+b};
+  });
+  QS.filter(q=>q.type==='open').forEach(q=>{
+    opens[q.id]=resp.filter(r=>r.ans[q.id]&&r.ans[q.id].trim()).map(r=>({role:r.role,text:r.ans[q.id]}));
+  });
+  ROLES.forEach(r=>{ byRole[r.id]=resp.filter(x=>x.role===r.id).length; });
+  return {scores,dilemmas,opens,byRole};
+}
+function computeRoleStats(){
+  const result={};
+  ROLES.forEach(role=>{
+    const rr=state.allResp.filter(r=>r.role===role.id), scores={};
+    LEVELS.forEach(l=>{
+      const sqs=QS.filter(q=>q.lv===l.id&&q.type==='scale'); let tot=0,cnt=0;
+      rr.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(v!==undefined){tot+=q.rev?6-v:v;cnt++;} }); });
+      scores[l.id]=cnt>0?Math.round(tot/cnt*100)/100:null;
+    });
+    result[role.id]={scores,count:rr.length};
+  });
+  return result;
+}
+
+// ── SVG SEGÉDFÜGGVÉNYEK ───────────────────────────────────────
+function radarSVG(scores,W,H,CX,CY,R,LR,fs,showVals){
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible">`;
+  [1,2,3,4,5].forEach(tick=>{
+    const r=(tick/5)*R;
+    const pts=LEVELS.map((_,i)=>{ const a=(i/5)*Math.PI*2-Math.PI/2; return `${CX+r*Math.cos(a)},${CY+r*Math.sin(a)}`; }).join(' ');
+    svg+=`<polygon points="${pts}" fill="${tick===5?'#f9fbfd':'none'}" stroke="${tick===5?'#c8d4e0':'#e8edf2'}" stroke-width="${tick===5?1.5:0.8}"/>`;
+    if(tick<5) svg+=`<text x="${CX+4}" y="${CY-r+4}" font-size="8" fill="#b0bec5">${tick}</text>`;
+  });
+  LEVELS.forEach((_,i)=>{ const a=(i/5)*Math.PI*2-Math.PI/2; svg+=`<line x1="${CX}" y1="${CY}" x2="${CX+R*Math.cos(a)}" y2="${CY+R*Math.sin(a)}" stroke="#dde3ea" stroke-width="1"/>`; });
+  const dPts=LEVELS.map((l,i)=>{ const a=(i/5)*Math.PI*2-Math.PI/2; const r=(( scores[l.id]||0)/5)*R; return `${CX+r*Math.cos(a)},${CY+r*Math.sin(a)}`; }).join(' ');
+  svg+=`<polygon points="${dPts}" fill="#314A9A18" stroke="#314A9A" stroke-width="2.5" stroke-linejoin="round"/>`;
+  LEVELS.forEach((l,i)=>{ const a=(i/5)*Math.PI*2-Math.PI/2; const r=((scores[l.id]||0)/5)*R; svg+=`<circle cx="${CX+r*Math.cos(a)}" cy="${CY+r*Math.sin(a)}" r="5" fill="${l.color}" stroke="white" stroke-width="2"/>`; });
+  LEVELS.forEach((l,i)=>{
+    const a=(i/5)*Math.PI*2-Math.PI/2, lx=CX+LR*Math.cos(a), ly=CY+LR*Math.sin(a);
+    const anchor=Math.abs(Math.cos(a))<0.15?'middle':Math.cos(a)>0?'start':'end';
+    const sc=scores[l.id]||0;
+    svg+=`<text x="${lx}" y="${ly-6}" text-anchor="${anchor}" font-size="${fs}" font-weight="700" fill="${l.color}" font-family="'DM Sans',system-ui,Arial">${l.emoji} ${l.title}</text>`;
+    if(showVals) svg+=`<text x="${lx}" y="${ly+9}" text-anchor="${anchor}" font-size="${fs+2}" font-weight="900" fill="${getHC(sc)}" font-family="'DM Sans',system-ui,Arial">${sc.toFixed(1)}</text>`;
+  });
+  return svg+'</svg>';
+}
+function histSVG(vals,color){
+  const dist=[1,2,3,4,5].map(n=>({n,c:vals.filter(v=>v===n).length}));
+  const maxC=Math.max(...dist.map(d=>d.c),1), avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const W=230,bH=72,labH=18,totH=bH+labH+12, bw=32,gap=10,padL=10;
+  let svg=`<svg width="${W}" height="${totH}" viewBox="0 0 ${W} ${totH}">`;
+  const avgX=padL+(avg-1)*(bw+gap)+bw/2;
+  svg+=`<line x1="${avgX}" y1="0" x2="${avgX}" y2="${bH}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>`;
+  svg+=`<text x="${avgX}" y="${bH+labH+10}" text-anchor="middle" font-size="10" fill="${color}" font-weight="800" font-family="'DM Sans',system-ui,Arial">∅ ${avg.toFixed(1)}</text>`;
+  dist.forEach((d,i)=>{
+    const bh=d.c>0?(d.c/maxC)*bH:2, x=padL+i*(bw+gap), y=bH-bh, op=0.35+0.65*(i/4);
+    svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${color}" rx="4" opacity="${op}"/>`;
+    if(d.c>0) svg+=`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" font-size="11" fill="${color}" font-weight="800" font-family="'DM Sans',system-ui,Arial">${d.c}</text>`;
+    svg+=`<text x="${x+bw/2}" y="${bH+labH}" text-anchor="middle" font-size="11" fill="#8899aa" font-family="'DM Sans',system-ui,Arial">${d.n}</text>`;
+  });
+  return svg+'</svg>';
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+function init(){
+  loadFromStorage();
+  const pyr=e('pyramid');
+  [...LEVELS].reverse().forEach((l,i)=>{
+    const row=document.createElement('div'); row.className='pyramid-row';
+    row.style.cssText=`margin:0 auto 4px;width:${46+i*12}%;background:${l.bg};border:1px solid ${l.color}44`;
+    row.innerHTML=`<span style="font-size:15px">${l.emoji}</span><div><div style="font-weight:700;font-size:13px;color:${l.color}">${l.title}</div><div style="font-size:11px;color:#666">${l.desc}</div></div>`;
+    pyr.appendChild(row);
+  });
+  const rb=e('role-btns');
+  ROLES.forEach(r=>{ const btn=document.createElement('button'); btn.className='role-btn'; btn.textContent=r.label; btn.onclick=()=>selectRole(r.id); btn.id='role-'+r.id; rb.appendChild(btn); });
+  const db=e('done-badges');
+  LEVELS.forEach(l=>{ const s=document.createElement('span'); s.style.cssText=`background:${l.bg};color:${l.color};border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600`; s.textContent=l.emoji+' '+l.title; db.appendChild(s); });
+  buildLevelDots();
+  if(EMAIL_CONFIGURED) emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+function buildLevelDots(){ const c=e('level-dots'); c.innerHTML=''; LEVELS.forEach(l=>{ const d=document.createElement('div'); d.className='level-dot'; d.id='dot-'+l.id; c.appendChild(d); }); }
+
+// ── LANDING ───────────────────────────────────────────────────
+function selectRole(id){ state.role=id; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected')); e('role-'+id).classList.add('selected'); e('start-btn').disabled=false; }
+function startSurvey(){ if(!state.role)return; state.qi=0; state.saved={}; state.cur=null; showScreen('s-survey'); renderQuestion(); }
+function restart(){ state.role=null; state.qi=0; state.saved={}; state.cur=null; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('selected')); e('start-btn').disabled=true; showScreen('s-landing'); }
+
+// ── SURVEY ────────────────────────────────────────────────────
+function renderQuestion(){
+  const q=QS[state.qi], lv=getLv(q.lv), TOTAL=QS.length, pct=(state.qi/TOTAL)*100;
+  const lvQs=QS.filter(x=>x.lv===lv.id), lvNum=lvQs.findIndex(x=>x.id===q.id)+1;
+  e('q-label').innerHTML=`${lv.emoji} <strong>${lv.title}</strong> – ${state.qi+1}/${TOTAL}. kérdés`;
+  e('q-pct').textContent=Math.round(pct)+'%';
+  e('q-progress').style.width=pct+'%'; e('q-progress').style.background=`linear-gradient(90deg,${lv.color},#314A9A)`;
+  LEVELS.forEach(l=>{ const dot=e('dot-'+l.id); if(!dot)return; const s=QS.findIndex(x=>x.lv===l.id),len=QS.filter(x=>x.lv===l.id).length; dot.style.background=(state.qi>=s+len)?l.color:(l.id===lv.id?l.color+'88':'#ddd'); });
+  const badge=e('q-badge'); badge.textContent=lv.emoji+' '+lv.title.toUpperCase()+' – '+lvNum+'. kérdés'; badge.style.background=lv.bg; badge.style.color=lv.color;
+  e('q-text').textContent=q.txt;
+  e('back-btn').style.display=state.qi>0?'block':'none';
+  e('next-btn').textContent=state.qi<TOTAL-1?'Következő →':'Beküldés ✓';
+  const inp=e('q-input'); inp.innerHTML='';
+  state.cur=state.saved[q.id]!==undefined?state.saved[q.id]:null;
+  if(q.type==='scale'){
+    const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:10px;justify-content:center;margin-bottom:10px';
+    [1,2,3,4,5].forEach(n=>{ const btn=document.createElement('button'); btn.className='scale-btn'; btn.textContent=n; btn.id='sc-'+n; if(state.cur===n){btn.style.background=lv.color;btn.style.color='white';btn.style.border=`3px solid ${lv.color}`;} btn.onclick=()=>setScaleAnswer(n,lv.color); wrap.appendChild(btn); });
+    const legend=document.createElement('div'); legend.style.cssText='display:flex;justify-content:space-between;font-size:11px;color:#aaa;padding:0 4px'; legend.innerHTML='<span>Egyáltalán nem / Soha</span><span>Teljes mértékben / Mindig</span>';
+    inp.appendChild(wrap); inp.appendChild(legend);
+  } else if(q.type==='dilemma'){
+    ['a','b'].forEach(v=>{ const btn=document.createElement('button'); btn.className='dilemma-btn'; btn.id='dil-'+v; btn.style.marginBottom='10px'; btn.innerHTML=`<span style="font-weight:800;font-size:16px;margin-right:8px">${v.toUpperCase()})</span>${q[v]}`; if(state.cur===v){btn.style.border=`3px solid ${lv.color}`;btn.style.background=lv.bg;btn.style.color=lv.color;btn.style.fontWeight='700';} btn.onclick=()=>setDilemmaAnswer(v,lv.color,lv.bg); inp.appendChild(btn); });
+  } else {
+    const ta=document.createElement('textarea'); ta.rows=5; ta.placeholder='Írd le gondolataidat...'; ta.value=state.cur||''; ta.oninput=()=>{state.cur=ta.value;updateNextBtn();}; inp.appendChild(ta);
+  }
+  updateNextBtn();
+}
+function setScaleAnswer(n,color){ state.cur=n; [1,2,3,4,5].forEach(i=>{ const btn=e('sc-'+i); if(!btn)return; if(i===n){btn.style.background=color;btn.style.color='white';btn.style.border=`3px solid ${color}`;}else{btn.style.background='white';btn.style.color='#444';btn.style.border='2px solid #e0e0e0';} }); updateNextBtn(); }
+function setDilemmaAnswer(v,color,bg){ state.cur=v; ['a','b'].forEach(opt=>{ const btn=e('dil-'+opt); if(!btn)return; if(opt===v){btn.style.border=`3px solid ${color}`;btn.style.background=bg;btn.style.color=color;btn.style.fontWeight='700';}else{btn.style.border='2px solid #e8e8e8';btn.style.background='white';btn.style.color='#333';btn.style.fontWeight='400';} }); updateNextBtn(); }
+function updateNextBtn(){ const valid=state.cur!==null&&state.cur!==undefined&&!(typeof state.cur==='string'&&state.cur.trim()===''); e('next-btn').disabled=!valid; }
+function goNext(){
+  const q=QS[state.qi]; if(state.cur===null||state.cur===undefined)return; if(typeof state.cur==='string'&&state.cur.trim()==='')return;
+  state.saved[q.id]=state.cur; state.cur=null;
+  if(state.qi<QS.length-1){ state.qi++; renderQuestion(); }
+  else {
+    const resp={role:state.role,ans:Object.assign({},state.saved),ts:Date.now()};
+    state.allResp.push(resp);
+    saveToStorage();
+    sendToBackend(resp);
+    showScreen('s-done');
+  }
+}
+function goBack(){ if(state.qi===0)return; state.cur=null; state.qi--; renderQuestion(); }
+
+// ── BACKEND KOMMUNIKÁCIÓ ──────────────────────────────────────
+function sendToBackend(resp){
+  if(!BACKEND_URL) return;
+  try{
+    fetch(BACKEND_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(resp)});
+  }catch(err){ console.warn('Backend küldés sikertelen:',err); }
+}
+
+function loadFromBackend(callback){
+  if(!BACKEND_URL){ callback(); return; }
+  const cbName='_lencioniCB_'+Date.now();
+  const timeout=setTimeout(()=>{ cleanup(); console.warn('Backend timeout – localStorage mód'); callback(); },8000);
+  function cleanup(){ clearTimeout(timeout); delete window[cbName]; const s=document.getElementById('_lencioni_jsonp'); if(s) s.remove(); }
+  window[cbName]=function(data){
+    cleanup();
+    if(Array.isArray(data) && data.length>0){
+      state.allResp=data;
+      try{ localStorage.setItem(LS_KEY,JSON.stringify(data)); }catch(e){}
+    }
+    callback();
+  };
+  const s=document.createElement('script');
+  s.id='_lencioni_jsonp';
+  s.onerror=()=>{ cleanup(); callback(); };
+  s.src=BACKEND_URL+'?callback='+cbName+'&t='+Date.now();
+  document.body.appendChild(s);
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+function doLogin(){
+  const pwd=e('pwd-input').value;
+  if(pwd===ADMIN_PWD){
+    e('pwd-err').style.display='none'; e('pwd-input').value='';
+    showScreen('s-admin'); state.tab='overview'; state.filterRole=null;
+    e('admin-content').innerHTML=`<div style="background:white;border-radius:16px;padding:60px;text-align:center;color:#314A9A"><div style="font-size:42px;margin-bottom:12px">⏳</div><p style="font-size:15px;font-weight:600">Válaszok betöltése...</p></div>`;
+    loadFromBackend(()=>renderAdmin());
+  } else { e('pwd-err').style.display='block'; }
+}
+function switchTab(tab){ state.tab=tab; ['overview','roles','dilemmas','open'].forEach(t=>{ e('tab-'+t).classList.toggle('active',t===tab); }); renderAdmin(); }
+function refreshAdmin(){ e('resp-count').textContent='⏳ frissítés...'; loadFromBackend(()=>renderAdmin()); }
+function setFilterRole(rid){ state.filterRole=rid; renderAdmin(); }
+
+function renderAdmin(){
+  const n=state.allResp.length; e('resp-count').textContent=n+' kitöltő';
+  const content=e('admin-content');
+  if(n===0){ content.innerHTML=`<div style="background:white;border-radius:16px;padding:60px;text-align:center;color:#aaa"><div style="font-size:52px;margin-bottom:12px">📋</div><p style="font-size:15px">Még nem érkezett válasz.<br>Várd meg, amíg a résztvevők kitöltik a felmérést.</p></div>`; return; }
+  const st=computeStats();
+  if(state.tab==='overview') renderOverview(st,content);
+  else if(state.tab==='roles') renderRoles(st,content);
+  else if(state.tab==='dilemmas') renderDilemmas(st,content);
+  else if(state.tab==='open') renderOpen(st,content);
+}
+
+// ── OVERVIEW TAB ──────────────────────────────────────────────
+function renderOverview(st,content){
+  const sc=st.scores, avg=LEVELS.reduce((s,l)=>s+(sc[l.id]||0),0)/LEVELS.length;
+  const best=LEVELS.reduce((a,b)=>(sc[a.id]||0)>(sc[b.id]||0)?a:b);
+  const worst=LEVELS.reduce((a,b)=>(sc[a.id]||0)<(sc[b.id]||0)?a:b);
+  let html='';
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px">`;
+  [{icon:'👥',val:state.allResp.length+' fő',lbl:'Kitöltők száma',col:'#314A9A'},{icon:getHE(avg),val:avg.toFixed(2)+' / 5',lbl:'Csapatállapot átlaga',col:getHC(avg)},{icon:'🏅',val:best.emoji+' '+best.title,lbl:'Legerősebb szint',col:best.color},{icon:'⚠️',val:worst.emoji+' '+worst.title,lbl:'Leginkább fejlesztendő',col:worst.color}].forEach(c=>{
+    html+=`<div class="stat-card" style="border-top:3px solid ${c.col}"><div style="font-size:26px;margin-bottom:8px">${c.icon}</div><div style="font-size:17px;font-weight:900;color:${c.col};margin-bottom:4px">${c.val}</div><div style="font-size:11px;color:#94a3b8">${c.lbl}</div></div>`;
+  });
+  html+='</div>';
+  html+=`<div class="section-card"><div class="section-title">Csapatdinamika – Lencioni-radar</div><p style="color:#94a3b8;font-size:12px;margin-bottom:16px">Az 5 szinten elért átlagpontszámok (1–5). Magasabb = egészségesebb dinamika.</p><div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center">`;
+  html+=radarSVG(sc,340,300,170,148,105,140,11,true);
+  html+=`<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">`;
+  LEVELS.forEach(l=>{ const s=sc[l.id]||0,hc=getHC(s),hl=getHL(s),he=getHE(s); html+=`<div style="padding:12px 14px;background:${l.bg};border-radius:12px;border-left:4px solid ${l.color}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:700;font-size:13px;color:${l.color}">${l.emoji} ${l.title}</span><div style="text-align:right"><span style="font-size:20px;font-weight:900;color:${hc}">${s.toFixed(1)}</span><span style="font-size:10px;color:${hc};font-weight:700;display:block">${he} ${hl}</span></div></div><div style="height:7px;background:#ddd;border-radius:4px;overflow:hidden"><div style="height:100%;width:${(s/5)*100}%;background:${l.color};border-radius:4px"></div></div></div>`; });
+  html+=`</div></div></div>`;
+  html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-bottom:14px">`;
+  LEVELS.forEach(l=>{ const s=sc[l.id]||0,hc=getHC(s),hl=getHL(s),he=getHE(s),interp=getInterp(l.id,s); html+=`<div class="level-card" style="border-top:3px solid ${l.color}"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:${l.color}">${l.emoji} ${l.title}</div><span style="background:${hc}18;color:${hc};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap">${he} ${hl}</span></div><div style="font-size:34px;font-weight:900;color:${hc};margin-bottom:4px">${s.toFixed(1)}<span style="font-size:14px;color:#ccc;font-weight:400"> / 5</span></div><div style="height:7px;background:#f0f0f0;border-radius:4px;margin-bottom:12px;overflow:hidden"><div style="height:100%;width:${(s/5)*100}%;background:${l.color};border-radius:4px"></div></div><p style="font-size:12px;color:#555;line-height:1.65">${interp}</p></div>`; });
+  html+='</div>';
+  html+=`<div class="section-card"><div class="section-title">Skálakérdések eloszlása</div>`;
+  QS.filter(q=>q.type==='scale').forEach(q=>{
+    const l=getLv(q.lv), vals=state.allResp.map(r=>r.ans[q.id]).filter(v=>v!==undefined); if(!vals.length)return;
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length, dispSc=q.rev?6-avg:avg;
+    html+=`<div style="display:flex;gap:18px;align-items:flex-start;padding:16px 0;border-bottom:1px solid #f3f4f6"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="background:${l.bg};color:${l.color};border-radius:6px;padding:2px 9px;font-size:10px;font-weight:700">${l.emoji} ${l.title}</span>${q.rev?'<span style="font-size:10px;color:#e74c3c;font-weight:600">⟲ fordított</span>':''}</div><p style="font-size:13px;color:#333;line-height:1.55">${q.txt}</p><div style="margin-top:8px;font-size:12px;color:#666">Nyers átlag: <strong>${avg.toFixed(2)}</strong>${q.rev?` &nbsp;·&nbsp; Korrigált: <strong style="color:${getHC(dispSc)}">${dispSc.toFixed(2)}</strong>`:''} &nbsp;·&nbsp; n=<strong>${vals.length}</strong> &nbsp;·&nbsp; <span style="color:${getHC(dispSc)};font-weight:700">${getHE(dispSc)} ${getHL(dispSc)}</span></div></div><div style="flex-shrink:0">${histSVG(vals,l.color)}</div></div>`;
+  });
+  html+=`</div>`;
+  content.innerHTML=html;
+}
+
+// ── ROLES TAB ─────────────────────────────────────────────────
+function renderRoles(st,content){
+  const rs=computeRoleStats(); let html='';
+  html+=`<div class="section-card"><div class="section-title">Pontszámok összehasonlítása szerepkörönként</div><p style="color:#94a3b8;font-size:12px;margin-bottom:16px">Az egyes Lencioni-szinteken elért átlagpontszámok a három szerepkör bontásában.</p><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:10px 12px;color:#64748b;font-weight:600;border-bottom:2px solid #f1f5f9">Szint</th><th style="text-align:center;padding:10px 12px;color:#314A9A;font-weight:800;border-bottom:2px solid #f1f5f9">Összesített</th>`;
+  ROLES.forEach(r=>{ html+=`<th style="text-align:center;padding:10px 12px;color:#374151;font-weight:700;border-bottom:2px solid #f1f5f9">${r.label}<br><span style="font-size:11px;color:#aaa;font-weight:400">${rs[r.id].count} fő</span></th>`; });
+  html+=`</tr></thead><tbody>`;
+  LEVELS.forEach(l=>{
+    const ov=st.scores[l.id]||0, ohc=getHC(ov);
+    html+=`<tr><td style="padding:12px;border-bottom:1px solid #f8f9fa"><span style="font-size:16px">${l.emoji}</span> <strong style="color:${l.color}">${l.title}</strong></td><td style="padding:12px;text-align:center;border-bottom:1px solid #f8f9fa"><div style="font-size:22px;font-weight:900;color:${ohc}">${ov.toFixed(1)}</div><div style="height:5px;background:#f0f0f0;border-radius:3px;margin:4px 12px;overflow:hidden"><div style="height:100%;width:${(ov/5)*100}%;background:${l.color};border-radius:3px"></div></div><div style="font-size:10px;color:${ohc};font-weight:700">${getHE(ov)} ${getHL(ov)}</div></td>`;
+    ROLES.forEach(r=>{ const s=rs[r.id].scores[l.id],hc=s!==null?getHC(s):'#ccc'; html+=`<td style="padding:12px;text-align:center;border-bottom:1px solid #f8f9fa;background:${s!==null?hc+'10':'transparent'}">${s!==null?`<div style="font-size:20px;font-weight:900;color:${hc}">${s.toFixed(1)}</div><div style="height:5px;background:#f0f0f0;border-radius:3px;margin:4px 8px;overflow:hidden"><div style="height:100%;width:${(s/5)*100}%;background:${l.color};border-radius:3px"></div></div><div style="font-size:10px;color:${hc};font-weight:700">${getHE(s)} ${getHL(s)}</div>`:'<div style="font-size:18px;color:#ddd">–</div>'}</td>`; });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  const rolesWithData=ROLES.filter(r=>rs[r.id].count>0);
+  if(rolesWithData.length>0){
+    html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:14px">`;
+    rolesWithData.forEach(r=>{ const rsc=rs[r.id].scores, allVals=LEVELS.map(l=>rsc[l.id]).filter(v=>v!==null), ravg=allVals.length?allVals.reduce((a,b)=>a+b,0)/allVals.length:0; html+=`<div class="section-card" style="text-align:center;padding:18px"><div style="font-weight:800;font-size:14px;color:#314A9A;margin-bottom:2px">${r.label}</div><div style="color:#94a3b8;font-size:11px;margin-bottom:6px">${rs[r.id].count} kitöltő · átlag: <strong style="color:${getHC(ravg)}">${ravg.toFixed(2)}</strong></div><div style="display:flex;justify-content:center">${radarSVG(rsc,200,180,100,90,60,80,9,false)}</div></div>`; });
+    html+=`</div>`;
+  }
+  content.innerHTML=html;
+}
+
+// ── DILEMMAS TAB ──────────────────────────────────────────────
+function renderDilemmas(st,content){
+  let html=`<div class="section-card" style="padding:14px 20px;margin-bottom:14px;background:linear-gradient(135deg,#eaf2fb,#f0f9ff)"><p style="font-size:13px;color:#1a5276;line-height:1.6"><strong>A B-választás minden dilemmánál a Lencioni-modell szerinti egészségesebb viselkedést tükrözi</strong> – azaz a sérülékenység vállalását, a konstruktív konfrontációt, a közös céloknak való alárendelést és az egyenes számonkérést.</p></div>`;
+  QS.filter(q=>q.type==='dilemma').forEach(q=>{
+    const l=getLv(q.lv), d=st.dilemmas[q.id], pA=d.total>0?Math.round(d.a/d.total*100):0, pB=d.total>0?Math.round(d.b/d.total*100):0;
+    html+=`<div class="section-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="background:${l.bg};color:${l.color};border-radius:10px;padding:3px 12px;font-size:11px;font-weight:700">${l.emoji} ${l.title}</span><span style="background:#f5f5f5;color:#777;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:600">${d.total} válasz</span></div><p style="font-weight:700;font-size:15px;color:#1E1E3A;margin-bottom:16px;line-height:1.5">${q.txt}</p>`;
+    html+=`<div style="margin-bottom:16px"><div style="display:flex;border-radius:10px;overflow:hidden;height:32px;background:#f0f0f0"><div style="width:${pA}%;background:${l.color}30;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${l.color}">${pA>10?pA+'%':''}</div><div style="width:${pB}%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white">${pB>10?pB+'%':''}</div></div><div style="display:flex;justify-content:space-between;font-size:11px;color:#b0b8c4;margin-top:4px"><span>← A válasz (${pA}%)</span><span>B válasz (${pB}%) →</span></div></div>`;
+    html+=`<div style="padding:12px 16px;border-radius:10px;background:#f8f9fa;border:1.5px solid #eee;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><span style="font-weight:800;color:#777;margin-right:8px">A)</span><span style="font-size:13px;color:#444;line-height:1.55">${q.a}</span></div><div style="text-align:right;margin-left:14px;white-space:nowrap"><div style="font-size:20px;font-weight:900;color:#999">${pA}%</div><div style="font-size:11px;color:#bbb">${d.a} fő</div></div></div></div>`;
+    html+=`<div style="padding:12px 16px;border-radius:10px;background:${l.bg};border:2px solid ${l.color}60;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><span style="font-weight:800;color:${l.color};margin-right:8px">B)</span><span style="font-size:13px;color:#222;line-height:1.55">${q.b}</span></div><div style="text-align:right;margin-left:14px;white-space:nowrap"><div style="font-size:20px;font-weight:900;color:${l.color}">${pB}%</div><div style="font-size:11px;color:${l.color}99">${d.b} fő</div></div></div><div style="margin-top:8px"><span style="background:${l.color};color:white;border-radius:20px;padding:3px 12px;font-size:10px;font-weight:700">✓ Lencioni-szempontból egészségesebb</span></div></div>`;
+    const rolesWithData=ROLES.filter(r=>state.allResp.some(resp=>resp.role===r.id));
+    if(rolesWithData.length>1){
+      html+=`<div style="border-top:1px solid #f0f0f0;padding-top:12px"><div style="font-size:11px;color:#b0b8c4;font-weight:700;letter-spacing:.5px;margin-bottom:8px">SZEREPKÖRÖK SZERINT</div><div style="display:flex;gap:8px;flex-wrap:wrap">`;
+      ROLES.forEach(r=>{ const rr=state.allResp.filter(resp=>resp.role===r.id); if(!rr.length)return; const rA=rr.filter(resp=>resp.ans[q.id]==='a').length,rB=rr.filter(resp=>resp.ans[q.id]==='b').length,rT=rA+rB,rPA=rT>0?Math.round(rA/rT*100):0,rPB=rT>0?Math.round(rB/rT*100):0; html+=`<div style="flex:1;min-width:130px;background:white;border-radius:10px;padding:10px 12px;border:1px solid #eee"><div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">${r.label} <span style="font-weight:400;color:#aaa">(${rT})</span></div><div style="display:flex;border-radius:6px;overflow:hidden;height:18px"><div style="width:${rPA}%;background:${l.color}25;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${l.color}">${rPA>15?rPA+'%':''}</div><div style="width:${rPB}%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white">${rPB>15?rPB+'%':''}</div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:3px"><span>A: ${rPA}%</span><span>B: ${rPB}%</span></div></div>`; });
+      html+=`</div></div>`;
+    }
+    html+=`</div>`;
+  });
+  content.innerHTML=html;
+}
+
+// ── OPEN ANSWERS TAB ──────────────────────────────────────────
+function renderOpen(st,content){
+  let html=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:#94a3b8;font-weight:600">Szűrés:</span>`;
+  [{id:null,label:'Mindenki'},...ROLES.map(r=>({id:r.id,label:r.label}))].forEach(c=>{ const active=state.filterRole===c.id; html+=`<button onclick="setFilterRole(${c.id===null?'null':`'${c.id}'`})" style="background:${active?'#314A9A':'white'};color:${active?'white':'#555'};border:1.5px solid ${active?'#314A9A':'#ddd'};border-radius:20px;padding:5px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">${c.label}</button>`; });
+  html+=`</div>`;
+  QS.filter(q=>q.type==='open').forEach(q=>{
+    const l=getLv(q.lv); let answers=st.opens[q.id]; if(state.filterRole) answers=answers.filter(a=>a.role===state.filterRole);
+    html+=`<div class="section-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="background:${l.bg};color:${l.color};border-radius:10px;padding:3px 12px;font-size:11px;font-weight:700">${l.emoji} ${l.title}</span><span style="background:#f5f5f5;color:#777;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:600">${answers.length} válasz</span></div><p style="font-weight:700;font-size:15px;color:#1E1E3A;margin-bottom:14px;line-height:1.5">${q.txt}</p>`;
+    if(!answers.length){ html+=`<div style="text-align:center;padding:24px;color:#c4cdd9;font-style:italic;font-size:13px">${state.filterRole?'Ennél a szerepkörnél nincs megjeleníthető válasz.':'Még nincs válasz.'}</div>`; }
+    else { answers.forEach(a=>{ html+=`<div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start"><div style="background:${l.color};color:white;border-radius:8px;padding:5px 10px;font-size:10px;font-weight:800;white-space:nowrap;line-height:1.3;margin-top:2px;text-align:center">${getRoleLabel(a.role)}</div><div style="background:${l.bg};border-radius:0 12px 12px 12px;padding:12px 16px;flex:1;font-size:13px;color:#333;line-height:1.7;border-left:3px solid ${l.color}40">${a.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div></div>`; }); }
+    html+=`</div>`;
+  });
+  content.innerHTML=html;
+}
+
+// ── EMAIL MODAL ───────────────────────────────────────────────
+function openEmailModal(){
+  if(state.allResp.length===0){alert('Még nincs kitöltött válasz.');return;}
+  const st=e('emailjs-status');
+  if(EMAIL_CONFIGURED){ st.innerHTML=`<div class="info-box">✅ <strong>EmailJS beállítva</strong> – a riport közvetlenül emailben lesz elküldve a megadott címre.</div>`; }
+  else { st.innerHTML=`<div class="info-box">ℹ️ <strong>EmailJS nincs beállítva</strong> – a riport automatikusan letöltődik HTML fájlként, amelyet emailen tudsz elküldeni mellékletként. Ha be szeretnéd állítani az automatikus küldést, kövesd a fájl elején lévő utasításokat.</div>`; }
+  e('send-email').value = NOTIFY_EMAIL || '';
+  e('send-company').value = '';
+  e('email-modal').classList.add('open');
+}
+function closeEmailModal(){ e('email-modal').classList.remove('open'); }
+
+function doSendResults(){
+  const email=e('send-email').value.trim(), company=e('send-company').value.trim();
+  if(!email){alert('Kérlek adj meg egy email címet!');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Érvénytelen email cím.');return;}
+  const btn=e('send-btn'); btn.disabled=true; btn.textContent='⏳ Feldolgozás...';
+  const reportHTML=generateReportHTML(company);
+  if(EMAIL_CONFIGURED){
+    emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{to_email:email,from_name:'Diamond Coaching – Lencioni Felmérés',company_name:company||'Megnevezés nélkül',respondent_count:state.allResp.length,report_html:reportHTML.substring(0,50000)})
+    .then(()=>{
+      e('modal-body').innerHTML=`<div class="success-box"><div style="font-size:44px;margin-bottom:12px">✅</div><div style="font-size:17px;font-weight:800;color:#27ae60;margin-bottom:8px">Sikeresen elküldve!</div><p style="font-size:13px;color:#555;margin-bottom:16px">Az eredmények el lettek küldve ide: <strong>${email}</strong></p><button class="btn btn-outline" onclick="closeEmailModal()">Bezárás</button></div>`;
+    }).catch(err=>{
+      btn.disabled=false; btn.textContent='📤 Küldés / Letöltés';
+      alert('EmailJS hiba: '+JSON.stringify(err)+'\nMegpróbáljuk letöltéssel...');
+      downloadReportFile(reportHTML, company);
+    });
+  } else {
+    downloadReportFile(reportHTML, company);
+    e('modal-body').innerHTML=`<div class="success-box"><div style="font-size:44px;margin-bottom:12px">📥</div><div style="font-size:17px;font-weight:800;color:#314A9A;margin-bottom:8px">Riport letöltve!</div><p style="font-size:13px;color:#555;margin-bottom:16px">A HTML riport letöltődött. Csatold emailben ehhez a címhez: <strong>${email}</strong></p><button class="btn btn-outline" onclick="closeEmailModal()">Bezárás</button></div>`;
+  }
+}
+
+function downloadReportFile(html, company){
+  const safe=(company||'riport').replace(/[^a-z0-9áéíóöőüűÁÉÍÓÖŐÜŰ\s-]/gi,'').replace(/\s+/g,'-').toLowerCase();
+  const date=new Date().toISOString().slice(0,10);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=`lencioni-${safe}-${date}.html`; a.click(); URL.revokeObjectURL(url);
+}
+
+// ── RIPORT GENERÁTOR ──────────────────────────────────────────
+function generateReportHTML(company){
+  const st=computeStats(), n=state.allResp.length;
+  const avg=LEVELS.reduce((s,l)=>s+(st.scores[l.id]||0),0)/LEVELS.length;
+  const date=new Date().toLocaleDateString('hu-HU',{year:'numeric',month:'long',day:'numeric'});
+  const rs=computeRoleStats();
+
+  // Mini inline radar SVG for report
+  const rsvg=radarSVG(st.scores,300,280,150,138,95,128,10,true);
+
+  let body='';
+
+  // Level summary section
+  LEVELS.forEach(l=>{
+    const sc=st.scores[l.id]||0, hc=getHC(sc), hl=getHL(sc), he=getHE(sc), interp=getInterp(l.id,sc);
+    const pct=Math.round((sc/5)*100);
+    body+=`<div style="background:white;border-radius:12px;padding:20px;margin-bottom:12px;border-left:5px solid ${l.color};box-shadow:0 2px 8px rgba(0,0,0,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div><span style="font-size:20px">${l.emoji}</span> <strong style="font-size:16px;color:${l.color}">${l.title}</strong><br><span style="font-size:12px;color:#888">${l.desc}</span></div>
+        <div style="text-align:right"><div style="font-size:28px;font-weight:900;color:${hc}">${sc.toFixed(1)}</div><div style="font-size:12px;color:${hc};font-weight:700">${he} ${hl}</div></div>
+      </div>
+      <div style="background:#f0f0f0;border-radius:6px;height:10px;margin-bottom:10px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${l.color};border-radius:6px"></div>
+      </div>
+      <p style="font-size:13px;color:#444;line-height:1.65;margin:0">${interp}</p>
+    </div>`;
+  });
+
+  // Dilemma section
+  let dilSection='';
+  QS.filter(q=>q.type==='dilemma').forEach(q=>{
+    const l=getLv(q.lv), d=st.dilemmas[q.id];
+    const pA=d.total>0?Math.round(d.a/d.total*100):0, pB=d.total>0?Math.round(d.b/d.total*100):0;
+    dilSection+=`<div style="margin-bottom:16px;padding:14px;background:white;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.06)">
+      <div style="margin-bottom:6px"><span style="background:${l.bg};color:${l.color};border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700">${l.emoji} ${l.title}</span></div>
+      <p style="font-weight:700;font-size:13px;color:#222;margin:6px 0 10px;line-height:1.4">${q.txt}</p>
+      <div style="display:flex;border-radius:8px;overflow:hidden;height:24px;margin-bottom:6px">
+        <div style="width:${pA}%;background:${l.color}30;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${l.color}">${pA>12?pA+'%':''}</div>
+        <div style="width:${pB}%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white">${pB>12?pB+'%':''}</div>
+      </div>
+      <div style="font-size:12px;color:#666"><strong style="color:#888">A)</strong> ${q.a} — <strong style="color:${l.color}">${pA}%</strong> &nbsp;|&nbsp; <strong style="color:${l.color}">B)</strong> ${q.b} — <strong style="color:${l.color}">${pB}%</strong> <span style="color:${l.color};font-size:10px;font-weight:700"> ✓ egészségesebb</span></div>
+    </div>`;
+  });
+
+  // Open answers section
+  let openSection='';
+  QS.filter(q=>q.type==='open').forEach(q=>{
+    const l=getLv(q.lv), answers=st.opens[q.id];
+    if(!answers.length) return;
+    openSection+=`<div style="margin-bottom:20px"><p style="font-weight:700;font-size:14px;color:${l.color};margin-bottom:10px">${l.emoji} ${q.txt}</p>`;
+    answers.forEach(a=>{ openSection+=`<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start"><div style="background:${l.color};color:white;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;white-space:nowrap">${getRoleLabel(a.role)}</div><div style="background:${l.bg};padding:10px 14px;border-radius:0 8px 8px 8px;flex:1;font-size:13px;color:#333;line-height:1.6">${a.text.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div></div>`; });
+    openSection+=`</div>`;
+  });
+
+  // Role summary table
+  let roleTable=`<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px"><thead><tr><th style="text-align:left;padding:8px 10px;border-bottom:2px solid #eee;color:#555">Szint</th><th style="text-align:center;padding:8px 10px;border-bottom:2px solid #eee;color:#314A9A">Össz.</th>`;
+  ROLES.forEach(r=>{ roleTable+=`<th style="text-align:center;padding:8px 10px;border-bottom:2px solid #eee;color:#374151">${r.label}<br><span style="font-weight:400;font-size:10px;color:#aaa">${rs[r.id].count} fő</span></th>`; });
+  roleTable+=`</tr></thead><tbody>`;
+  LEVELS.forEach(l=>{
+    const ov=st.scores[l.id]||0, ohc=getHC(ov);
+    roleTable+=`<tr><td style="padding:8px 10px;border-bottom:1px solid #f5f5f5">${l.emoji} <strong style="color:${l.color}">${l.title}</strong></td><td style="padding:8px 10px;border-bottom:1px solid #f5f5f5;text-align:center;font-size:16px;font-weight:900;color:${ohc}">${ov.toFixed(1)}</td>`;
+    ROLES.forEach(r=>{ const s=rs[r.id].scores[l.id], hc=s!==null?getHC(s):'#ccc'; roleTable+=`<td style="padding:8px 10px;border-bottom:1px solid #f5f5f5;text-align:center;font-weight:800;color:${hc}">${s!==null?s.toFixed(1):'–'}</td>`; });
+    roleTable+=`</tr>`;
+  });
+  roleTable+=`</tbody></table>`;
+
+  return `<!DOCTYPE html>
+<html lang="hu"><head><meta charset="UTF-8">
+<title>Lencioni Felmérés – ${company||'Eredmények'} – ${date}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>body{font-family:'DM Sans',system-ui,Arial,sans-serif;background:#F4F2EF;margin:0;padding:0}@media print{body{background:white}.no-print{display:none}}</style>
+</head><body>
+<div style="max-width:820px;margin:0 auto;padding:20px">
+
+<!-- FEJLÉC -->
+<div style="background:linear-gradient(135deg,#1E3178,#314A9A);color:white;padding:32px;border-radius:16px;margin-bottom:20px">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+    <img src="https://diamondcoaching.hu/wp-content/uploads/2020/11/diamond-coaching-logo.svg" alt="Diamond Coaching" style="height:38px;width:auto;filter:brightness(0) invert(1)" onerror="this.style.display='none'">
+    <span style="font-size:13px;opacity:.75;font-weight:600">Lencioni Együttműködési Felmérés</span>
+  </div>
+  <h1 style="font-size:26px;font-weight:900;margin:0 0 6px">${company||'Felmérési eredmények'}</h1>
+  <div style="font-size:14px;opacity:.85">${date} &nbsp;·&nbsp; ${n} kitöltő &nbsp;·&nbsp; Csapatátlag: <strong>${avg.toFixed(2)} / 5</strong> &nbsp;·&nbsp; ${getHE(avg)} ${getHL(avg)}</div>
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+  ${ROLES.map(r=>`<span style="background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700">${r.label}: ${rs[r.id].count} fő</span>`).join('')}
+  </div>
+</div>
+
+<!-- RADAR -->
+<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:center">
+  <h2 style="font-size:16px;color:#314A9A;margin:0 0 16px">Lencioni-radar – csapatdinamika áttekintés</h2>
+  ${rsvg}
+</div>
+
+<!-- SZINTENKÉNTI ELEMZÉS -->
+<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <h2 style="font-size:16px;color:#314A9A;margin:0 0 16px">Szintenkénti elemzés</h2>
+  ${body}
+</div>
+
+<!-- SZEREPKÖRÖK -->
+<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <h2 style="font-size:16px;color:#314A9A;margin:0 0 4px">Pontszámok szerepkörönként</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:0 0 12px">– = nincs válasz ebből a körből</p>
+  ${roleTable}
+</div>
+
+<!-- DILEMMÁK -->
+<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <h2 style="font-size:16px;color:#314A9A;margin:0 0 6px">Dilemmák megoszlása</h2>
+  <p style="font-size:12px;color:#94a3b8;margin:0 0 14px">B = Lencioni-szempontból egészségesebb választás</p>
+  ${dilSection}
+</div>
+
+<!-- NYÍLT VÁLASZOK -->
+${openSection?`<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <h2 style="font-size:16px;color:#314A9A;margin:0 0 16px">Nyílt válaszok</h2>
+  ${openSection}
+</div>`:''}
+
+<div style="text-align:center;padding:24px 20px;color:#aaa;font-size:12px;border-top:1px solid #e8e4e0;margin-top:10px">
+  <img src="https://diamondcoaching.hu/wp-content/uploads/2020/11/diamond-coaching-logo.svg" alt="Diamond Coaching" style="height:28px;width:auto;opacity:.45;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
+  <strong style="color:#314A9A;opacity:.7">Diamond Coaching &amp; Development</strong> · Lencioni Együttműködési Felmérés · ${date}
+</div>
+
+</div></body></html>`;
+}
+
+// ── INDÍTÁS ───────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
