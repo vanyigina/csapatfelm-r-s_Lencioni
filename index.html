@@ -308,7 +308,7 @@ function computeStats(){
   LEVELS.forEach(l=>{
     const sqs=QS.filter(q=>q.lv===l.id&&q.type==='scale');
     let tot=0,cnt=0;
-    resp.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(v!==undefined){tot+=q.rev?6-v:v;cnt++;} }); });
+    resp.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(typeof v==='number'){tot+=q.rev?6-v:v;cnt++;} }); });
     scores[l.id]=cnt>0?Math.round(tot/cnt*100)/100:0;
   });
   QS.filter(q=>q.type==='dilemma').forEach(q=>{
@@ -327,7 +327,7 @@ function computeRoleStats(){
     const rr=state.allResp.filter(r=>r.role===role.id), scores={};
     LEVELS.forEach(l=>{
       const sqs=QS.filter(q=>q.lv===l.id&&q.type==='scale'); let tot=0,cnt=0;
-      rr.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(v!==undefined){tot+=q.rev?6-v:v;cnt++;} }); });
+      rr.forEach(r=>{ sqs.forEach(q=>{ const v=r.ans[q.id]; if(typeof v==='number'){tot+=q.rev?6-v:v;cnt++;} }); });
       scores[l.id]=cnt>0?Math.round(tot/cnt*100)/100:null;
     });
     result[role.id]={scores,count:rr.length};
@@ -515,7 +515,7 @@ function renderOverview(st,content){
   html+='</div>';
   html+=`<div class="section-card"><div class="section-title">Skálakérdések eloszlása</div>`;
   QS.filter(q=>q.type==='scale').forEach(q=>{
-    const l=getLv(q.lv), vals=state.allResp.map(r=>r.ans[q.id]).filter(v=>v!==undefined); if(!vals.length)return;
+    const l=getLv(q.lv), vals=state.allResp.map(r=>r.ans[q.id]).filter(v=>typeof v==='number'); if(!vals.length)return;
     const avg=vals.reduce((a,b)=>a+b,0)/vals.length, dispSc=q.rev?6-avg:avg;
     html+=`<div style="display:flex;gap:18px;align-items:flex-start;padding:16px 0;border-bottom:1px solid #f3f4f6"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="background:${l.bg};color:${l.color};border-radius:6px;padding:2px 9px;font-size:10px;font-weight:700">${l.emoji} ${l.title}</span>${q.rev?'<span style="font-size:10px;color:#e74c3c;font-weight:600">⟲ fordított</span>':''}</div><p style="font-size:13px;color:#333;line-height:1.55">${q.txt}</p><div style="margin-top:8px;font-size:12px;color:#666">Nyers átlag: <strong>${avg.toFixed(2)}</strong>${q.rev?` &nbsp;·&nbsp; Korrigált: <strong style="color:${getHC(dispSc)}">${dispSc.toFixed(2)}</strong>`:''} &nbsp;·&nbsp; n=<strong>${vals.length}</strong> &nbsp;·&nbsp; <span style="color:${getHC(dispSc)};font-weight:700">${getHE(dispSc)} ${getHL(dispSc)}</span></div></div><div style="flex-shrink:0">${histSVG(vals,l.color)}</div></div>`;
   });
