@@ -165,7 +165,7 @@ input:focus{border-color:#314A9A}
     <div style="display:flex;gap:4px;margin-bottom:16px;background:white;border-radius:12px;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
       <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">📊 Áttekintés</button>
       <button class="tab-btn" id="tab-roles" onclick="switchTab('roles')">👥 Szerepkörök</button>
-      <button class="tab-btn" id="tab-dilemmas" onclick="switchTab('dilemmas')">⚖️ Dilemmák</button>
+      <button class="tab-btn" id="tab-dilemmas" onclick="switchTab('dilemmas')" style="display:none">⚖️ Dilemmák</button>
       <button class="tab-btn" id="tab-open" onclick="switchTab('open')">📝 Nyílt válaszok</button>
     </div>
     <div id="admin-content"></div>
@@ -237,32 +237,34 @@ const LEVELS = [
   {id:"felelosseg",  title:"Felelősség",    emoji:"⚖️", color:"#1e8449", bg:"#eafaf1", desc:"Egymástól számonkérés"},
   {id:"eredmenyek",  title:"Eredmények",    emoji:"🏆", color:"#1a5276", bg:"#eaf2fb", desc:"Kollektív fókusz"}
 ];
+// Optimalizált tételbank (2026.05): dimenziónként 4 gyakorisági Likert (1 fordított [rev]) + 1 nyílt.
+// Egységes 5-fokú gyakorisági skála (1 Szinte soha … 5 Szinte mindig); A/B dilemma megszüntetve.
 const QS = [
-  {id:"b1",lv:"bizalom",    type:"scale",  txt:"Mennyire osztod meg nyíltan a hibáidat és gyengeségeidet más területek vezetőivel?"},
-  {id:"b2",lv:"bizalom",    type:"dilemma",txt:"Egy vezető kolléga nyilvánosan hibázik egy megbeszélésen. Te inkább...",a:"Szólsz neki négyszemközt a megbeszélés után",b:"Szót emelsz a megbeszélésen, hogy segítsd a helyes döntést"},
-  {id:"b3",lv:"bizalom",    type:"scale",  txt:"Mennyire érzed biztonságosnak azt mondani, hogy nem tudom vagy tévedtem a vezető csapatban?"},
-  {id:"b4",lv:"bizalom",    type:"open",   txt:"Írj le egy helyzetet, amikor más területtel való együttműködés különösen nehéznek bizonyult – mi állt a háttérben?"},
-  {id:"b5",lv:"bizalom",    type:"dilemma",txt:"Új, területek közötti projekt indul. Te inkább...",a:"Megvárod, amíg a másik fél jelzi az igényeit",b:"Proaktívan felveszed a kapcsolatot és egyeztetsz"},
-  {id:"k1",lv:"konfliktus", type:"scale",  txt:"Mennyire mondod el nyíltan a véleményedet, ha az eltér a többiekétől egy közös megbeszélésen?"},
-  {id:"k2",lv:"konfliktus", type:"dilemma",txt:"Egy más területű vezető döntésével alapvetően nem értesz egyet. Te inkább...",a:"Elfogadod, mert nem a te hatáskörőd – belül frusztrált maradsz",b:"Megvitatod, vállalva a feszültséget is – mert fontosnak tartod"},
-  {id:"k3",lv:"konfliktus", type:"scale",  txt:"Mennyire jellemző, hogy a valódi vélemények folyosói beszélgetéseken hangzanak el, nem a közös fórumon? (1=soha, 5=rendszeresen)",rev:true},
-  {id:"k4",lv:"konfliktus", type:"open",   txt:"Milyen témákat kerülünk el leginkább a közös megbeszéléseken? Szerinted miért?"},
-  {id:"k5",lv:"konfliktus", type:"dilemma",txt:"Feszült vita alakul ki két terület között – te nem vagy közvetlenül érintett. Te inkább...",a:"Visszahúzódsz – nem szeretsz ilyen helyzetekben lenni",b:"Aktívan segíted a vita konstruktív lezárását"},
-  {id:"e1",lv:"elkotelezes",type:"scale",  txt:"Mennyire érzed, hogy a közös döntések után mindenki egyformán elkötelezett a végrehajtás iránt?"},
-  {id:"e2",lv:"elkotelezes",type:"dilemma",txt:"Egy döntéssel nem értesz egyet, de a csapat meghozta. Te inkább...",a:"Végrehajtod, de a saját csapatodnak is jelzed a fenntartásod",b:"A döntést magadénak tekinted és teljes energiával képviseled"},
-  {id:"e3",lv:"elkotelezes",type:"scale",  txt:"Mennyire jellemző, hogy megbeszélésen látszólagos konszenzus születik, de utána ki-ki a saját útját járja? (1=soha, 5=rendszeresen)",rev:true},
-  {id:"e4",lv:"elkotelezes",type:"open",   txt:"Milyen döntések vagy irányok azok, amelyek mögé nehéz őszintén beállni? Miért?"},
-  {id:"e5",lv:"elkotelezes",type:"dilemma",txt:"Saját területed prioritásai és egy közösen vállalt projekt határideje ütköznek. Te inkább...",a:"A saját területed prioritásait véded – ezért vagy felelős",b:"A közös vállalást tartod elsőnek, és egyeztetsz belül"},
-  {id:"f1",lv:"felelosseg",  type:"scale",  txt:"Mennyire kérsz számon más területektől teljesítményt, ha az közvetlen hatással van a te munkádra?"},
-  {id:"f2",lv:"felelosseg",  type:"dilemma",txt:"Egy másik terület ismételten késve adja át a szükséges anyagokat. Te inkább...",a:"Megoldod magad valahogy – nem akarsz konfrontációt",b:"Jelzed a problémát közvetlenül az érintett vezetőnek, konstruktívan"},
-  {id:"f3",lv:"felelosseg",  type:"scale",  txt:"Mennyire egyértelmű, hogy kinek mi a felelőssége a területek közötti folyamatokban?"},
-  {id:"f4",lv:"felelosseg",  type:"open",   txt:"Milyen folyamatokban hiányzik nálunk az egyértelmű felelősség-meghatározás? Mi az oka?"},
-  {id:"f5",lv:"felelosseg",  type:"dilemma",txt:"A vezető csapat egyik tagja rendszeresen nem tartja a közösen vállalt határidőket. Te inkább...",a:"Nem a te dolgod – majd a felettese szól neki",b:"Szólsz neki közvetlenül – mert ez az egész csapatot érinti"},
-  {id:"r1",lv:"eredmenyek",  type:"scale",  txt:"Mennyire érzed, hogy a vezető csapatban a vállalat közös eredményei fontosabbak, mint az egyes területek mutatói?"},
-  {id:"r2",lv:"eredmenyek",  type:"dilemma",txt:"A saját területed KPI-ja és a vállalat összteljesítménye ütközik. Te inkább...",a:"A saját területed mutatóit véded – ezért vagy felelős",b:"A vállalati érdeket helyezed előtérbe, még ha a saját mutatód szenved is"},
-  {id:"r3",lv:"eredmenyek",  type:"scale",  txt:"Mennyire ismered a többi terület legfontosabb céljait és aktuális kihívásait?"},
-  {id:"r4",lv:"eredmenyek",  type:"open",   txt:"Mit kellene konkrétan változtatni a működésünkben ahhoz, hogy hatékonyabban működjünk együtt más területekkel?"},
-  {id:"r5",lv:"eredmenyek",  type:"dilemma",txt:"Kiderül, hogy egy terület kiváló eredményt ért el, de más területek rovására. A csapat reakciója legyen inkább...",a:"Dicséret – mindenki a saját területéért felelős",b:"Kritikus értékelés – az együttműködési hatást is mérlegelni kell"}
+  {id:"b1",lv:"bizalom",    type:"scale", txt:"Nyíltan felvállalom a saját hibáimat a többi terület vezetői előtt."},
+  {id:"b2",lv:"bizalom",    type:"scale", txt:"Biztonságosnak érzem a vezetői körben kimondani, hogy „ezt nem tudom” vagy „tévedtem”."},
+  {id:"b3",lv:"bizalom",    type:"scale", txt:"Egy új, területek közötti projektnél én kezdeményezem a kapcsolatfelvételt és az egyeztetést."},
+  {id:"b4",lv:"bizalom",    type:"scale", rev:true, txt:"Tartózkodom attól, hogy a többi terület vezetője előtt megmutassam a bizonytalanságaimat."},
+  {id:"b5",lv:"bizalom",    type:"open",  txt:"Idézz fel egy helyzetet, amikor nehezedre esett őszintén megnyílni vagy bizalmat adni egy másik terület vezetőjének. Mi állt a háttérben?"},
+  {id:"k1",lv:"konfliktus", type:"scale", txt:"Közös megbeszélésen kimondom a véleményemet akkor is, ha eltér a többiekétől."},
+  {id:"k2",lv:"konfliktus", type:"scale", txt:"Ha egy másik terület vezetőjének döntésével nem értek egyet, nyíltan megvitatom vele, vállalva a feszültséget is."},
+  {id:"k3",lv:"konfliktus", type:"scale", rev:true, txt:"A valódi véleményemet inkább folyosói vagy négyszemközti beszélgetésen mondom el, nem a közös fórumon."},
+  {id:"k4",lv:"konfliktus", type:"scale", txt:"Ha két másik terület között feszült vita alakul ki, beavatkozom, hogy segítsem a konstruktív lezárását."},
+  {id:"k5",lv:"konfliktus", type:"open",  txt:"Milyen témákat kerülünk el leginkább a közös megbeszéléseken, és szerinted miért?"},
+  {id:"e1",lv:"elkotelezes",type:"scale", txt:"A közös döntések után a vezetői csapatban mindenki egyformán elkötelezett a végrehajtás iránt."},
+  {id:"e2",lv:"elkotelezes",type:"scale", txt:"Egy döntést akkor is teljes energiával képviselek, ha eredetileg nem értettem vele egyet."},
+  {id:"e3",lv:"elkotelezes",type:"scale", txt:"Amikor a saját területem prioritásai és egy közös határidő ütköznek, a közös vállalást helyezem előtérbe."},
+  {id:"e4",lv:"elkotelezes",type:"scale", rev:true, txt:"A megbeszéléseinken látszólagos egyetértés születik, de utána ki-ki a saját útját járja."},
+  {id:"e5",lv:"elkotelezes",type:"open",  txt:"Milyen döntések vagy irányok azok, amelyek mögé nehéz őszintén beállni? Miért?"},
+  {id:"f1",lv:"felelosseg",  type:"scale", txt:"Számon kérem egy másik terület teljesítményét, ha az közvetlenül kihat a munkámra."},
+  {id:"f2",lv:"felelosseg",  type:"scale", txt:"Ha egy vezetőtársam nem tartja a közösen vállalt határidőt, közvetlenül szólok neki."},
+  {id:"f3",lv:"felelosseg",  type:"scale", txt:"Egyértelmű a vezetői csapatban, hogy a területek közötti folyamatokban kinek mi a felelőssége."},
+  {id:"f4",lv:"felelosseg",  type:"scale", rev:true, txt:"Ha egy másik terület csúszik, inkább magam megoldom, semmint hogy jelezzem vagy számon kérjem."},
+  {id:"f5",lv:"felelosseg",  type:"open",  txt:"Milyen folyamatokban hiányzik nálunk az egyértelmű felelősség-meghatározás? Mi az oka?"},
+  {id:"r1",lv:"eredmenyek",  type:"scale", txt:"Jellemző, hogy a vezetői csapatban a vállalat közös eredménye fontosabb az egyes területek külön mutatóinál."},
+  {id:"r2",lv:"eredmenyek",  type:"scale", txt:"Amikor a saját területem KPI-ja és a vállalati összteljesítmény ütközik, a vállalati érdeket helyezem előtérbe – akkor is, ha a saját mutatóm szenved."},
+  {id:"r3",lv:"eredmenyek",  type:"scale", txt:"Ismerem a többi terület legfontosabb céljait és aktuális kihívásait."},
+  {id:"r4",lv:"eredmenyek",  type:"scale", rev:true, txt:"Előfordul, hogy egy terület a saját kiváló eredményét akkor is ünnepli, ha az más területek rovására született."},
+  {id:"r5",lv:"eredmenyek",  type:"open",  txt:"Mit kellene konkrétan változtatni a működésünkben ahhoz, hogy hatékonyabban működjünk együtt más területekkel?"}
 ];
 
 // ── ÁLLAPOT ───────────────────────────────────────────────────
@@ -413,7 +415,7 @@ function renderQuestion(){
   if(q.type==='scale'){
     const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:10px;justify-content:center;margin-bottom:10px';
     [1,2,3,4,5].forEach(n=>{ const btn=document.createElement('button'); btn.className='scale-btn'; btn.textContent=n; btn.id='sc-'+n; if(state.cur===n){btn.style.background=lv.color;btn.style.color='white';btn.style.border=`3px solid ${lv.color}`;} btn.onclick=()=>setScaleAnswer(n,lv.color); wrap.appendChild(btn); });
-    const legend=document.createElement('div'); legend.style.cssText='display:flex;justify-content:space-between;font-size:11px;color:#aaa;padding:0 4px'; legend.innerHTML='<span>Egyáltalán nem / Soha</span><span>Teljes mértékben / Mindig</span>';
+    const legend=document.createElement('div'); legend.style.cssText='display:flex;justify-content:space-between;font-size:11px;color:#aaa;padding:0 4px'; legend.innerHTML='<span>1 · Szinte soha</span><span>5 · Szinte mindig</span>';
     inp.appendChild(wrap); inp.appendChild(legend);
   } else if(q.type==='dilemma'){
     ['a','b'].forEach(v=>{ const btn=document.createElement('button'); btn.className='dilemma-btn'; btn.id='dil-'+v; btn.style.marginBottom='10px'; btn.innerHTML=`<span style="font-weight:800;font-size:16px;margin-right:8px">${v.toUpperCase()})</span>${q[v]}`; if(state.cur===v){btn.style.border=`3px solid ${lv.color}`;btn.style.background=lv.bg;btn.style.color=lv.color;btn.style.fontWeight='700';} btn.onclick=()=>setDilemmaAnswer(v,lv.color,lv.bg); inp.appendChild(btn); });
@@ -726,11 +728,11 @@ function generateReportHTML(company){
 </div>
 
 <!-- DILEMMÁK -->
-<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+${dilSection?`<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
   <h2 style="font-size:16px;color:#314A9A;margin:0 0 6px">Dilemmák megoszlása</h2>
   <p style="font-size:12px;color:#94a3b8;margin:0 0 14px">B = Lencioni-szempontból egészségesebb választás</p>
   ${dilSection}
-</div>
+</div>`:''}
 
 <!-- NYÍLT VÁLASZOK -->
 ${openSection?`<div style="background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)">
